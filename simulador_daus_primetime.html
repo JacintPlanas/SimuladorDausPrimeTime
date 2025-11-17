@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Tirada de Daus</title>
+    <!-- Carreguem Tailwind CSS per als estils -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuració del tipus de lletra 'Inter' com demana la guia d'estil */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Definim una animació simple per a la tirada */
+        @keyframes roll-animation {
+            0% {
+                transform: rotate(0deg) scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+            100% {
+                transform: rotate(359deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Classe que aplicarem amb JavaScript per activar l'animació */
+        .dice-roll {
+            animation: roll-animation 0.4s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full m-4">
+        
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            Simulador de Daus
+        </h1>
+
+        <!-- Menú de selecció per al tipus de daus (MODIFICAT) -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Selecciona la parella de daus:
+            </label>
+            <!-- Grup de botons -->
+            <div class="flex flex-col space-y-2">
+                <button data-type="2d6" class="dice-type-btn w-full p-3 border rounded-lg transition-colors duration-200">
+                    Dos daus de 6 cares (2xD6)
+                </button>
+                <button data-type="2d10" class="dice-type-btn w-full p-3 border rounded-lg transition-colors duration-200">
+                    Dos daus de 10 cares (2xD10)
+                </button>
+                <button data-type="d12d20" class="dice-type-btn w-full p-3 border rounded-lg transition-colors duration-200">
+                    Un dau de 12 i un de 20 cares (1xD12 + 1xD20)
+                </button>
+            </div>
+        </div>
+
+        <!-- Botó per llançar els daus -->
+        <button id="roll-button" class="w-full bg-blue-600 text-white font-bold p-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+            Llançar els Daus
+        </button>
+
+        <!-- Àrea de visualització dels daus -->
+        <div class="flex justify-around my-8">
+            <!-- Dau 1 -->
+            <div id="die1" class="w-28 h-28 bg-gray-50 border-4 border-gray-300 rounded-lg flex items-center justify-center text-5xl font-bold text-gray-700 shadow-inner transition-all">
+                -
+            </div>
+            <!-- Dau 2 -->
+            <div id="die2" class="w-28 h-28 bg-gray-50 border-4 border-gray-300 rounded-lg flex items-center justify-center text-5xl font-bold text-gray-700 shadow-inner transition-all">
+                -
+            </div>
+        </div>
+
+        <!-- Resultat de la suma (ELIMINAT) -->
+        <!-- <p id="result-text" ...> ... </p> -->
+
+        <!-- Missatge especial (ocult per defecte) -->
+        <p id="special-message" class="text-lg text-center font-bold text-red-600 mt-4 h-7 hidden">
+            <!-- El missatge especial apareixerà aquí -->
+        </p>
+
+    </div>
+
+    <script>
+        // Obtenim les referències als elements del DOM
+        const rollButton = document.getElementById('roll-button');
+        // const diceTypeSelect = document.getElementById('dice-type'); // ELIMINAT
+        const typeButtons = document.querySelectorAll('.dice-type-btn'); // AFEGIT
+        const die1Display = document.getElementById('die1');
+        const die2Display = document.getElementById('die2');
+        // const resultText = document.getElementById('result-text'); // ELIMINAT
+        const specialMessage = document.getElementById('special-message');
+
+        let selectedType = '2d6'; // AFEGIT: Estat per al tipus de dau
+        const activeClasses = ['bg-orange-600', 'text-white', 'border-orange-600']; // MODIFICAT
+        const inactiveClasses = ['bg-white', 'text-gray-700', 'border-gray-300']; // AFEGIT
+
+        // AFEGIT: Funció per actualitzar l'estat visual dels botons
+        function setActiveButton(clickedButton) {
+            typeButtons.forEach(button => {
+                button.classList.remove(...activeClasses);
+                button.classList.add(...inactiveClasses);
+            });
+            clickedButton.classList.remove(...inactiveClasses);
+            clickedButton.classList.add(...activeClasses);
+            selectedType = clickedButton.dataset.type; // Actualitzem l'estat
+        }
+
+        // AFEGIT: Afegim esdeveniment 'click' als botons de selecció
+        typeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                setActiveButton(button);
+            });
+        });
+
+        // AFEGIT: Establim l'estat inicial (marquem el primer botó com actiu)
+        setActiveButton(document.querySelector('.dice-type-btn[data-type="2d6"]'));
+
+
+        // Afegim l'esdeveniment 'click' al botó
+        rollButton.addEventListener('click', () => {
+            // 1. Amaguem el missatge especial (per si estava visible d'una tirada anterior)
+            specialMessage.classList.add('hidden');
+            // resultText.textContent = ''; // ELIMINAT
+
+            // 2. Obtenim el tipus de daus seleccionat (Llegim la variable global 'selectedType')
+            // const selectedType = diceTypeSelect.value; // ELIMINAT
+
+            let max1, max2;
+
+            // 3. Establim els valors màxims per a cada dau segons la selecció
+            switch (selectedType) {
+                case '2d6':
+                    max1 = 6;
+                    max2 = 6;
+                    break;
+                case '2d10':
+                    max1 = 10;
+                    max2 = 10;
+                    break;
+                case 'd12d20':
+                    max1 = 12;
+                    max2 = 20;
+                    break;
+            }
+
+            // 4. Generem els números aleatoris
+            // Math.random() genera un número entre 0 (inclòs) i 1 (exclòs)
+            // Ho multipliquem pel màxim (p.ex. 6) -> 0 a 5.999...
+            // Math.floor() ho arrodoneix cap avall -> 0 a 5
+            // Sumem 1 -> 1 a 6
+            const roll1 = Math.floor(Math.random() * max1) + 1;
+            const roll2 = Math.floor(Math.random() * max2) + 1;
+
+            // 5. Mostrem els resultats als "daus" visuals
+            die1Display.textContent = roll1;
+            die2Display.textContent = roll2;
+
+            // 6. Afegim l'animació
+            die1Display.classList.add('dice-roll');
+            die2Display.classList.add('dice-roll');
+
+            // 7. Mostrem el text del resultat (ELIMINAT)
+            // const total = roll1 + roll2; // ELIMINAT
+            // resultText.textContent = `Resultat: ${roll1} + ${roll2} = ${total}`; // ELIMINAT
+
+            // 8. Comprovem la condició especial
+            if (roll1 === 1 && roll2 === 1) {
+                specialMessage.textContent = "Selecciona tots els nombres primers!";
+                specialMessage.classList.remove('hidden'); // Mostrem el missatge
+            }
+
+            // 9. Traiem la classe d'animació després que acabi (400ms)
+            // Això permet que l'animació es torni a executar a la propera tirada
+            setTimeout(() => {
+                die1Display.classList.remove('dice-roll');
+                die2Display.classList.remove('dice-roll');
+            }, 400);
+        });
+    </script>
+
+</body>
+</html>
